@@ -1,0 +1,72 @@
+.app {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.toolbar {
+  margin-bottom: 16px;
+}
+
+.toolbar h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  color: #111827;
+}
+
+.hint {
+  margin: 0 0 14px;
+  color: #4b5563;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+.controls input {
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.controls button {
+  border: 1px solid #166534;
+  background: #1d7f36;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.meta {
+  margin-top: 12px;
+  display: flex;
+  gap: 20px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.error {
+  margin: 10px 0 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.canvasWrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: inline-block;
+  overflow: hidden;
+}
