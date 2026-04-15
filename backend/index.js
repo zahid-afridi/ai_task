@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { Server } from "socket.io";
+import { generateFallbackNodes } from "./fallbackLayouts.js";
 
 dotenv.config();
 
@@ -126,33 +127,58 @@ function extractJsonObject(rawText) {
   }
 }
 
+function isLlmConfigured() {
+  return Boolean(String(process.env.LLM_API_KEY || "").trim());
+}
+
 async function promptToNodes(prompt) {
-  const apiKey = process.env.LLM_API_KEY;
+  const apiKey = String(process.env.LLM_API_KEY || "").trim();
   const baseUrl = process.env.LLM_BASE_URL || "https://api.openai.com/v1";
   const model = process.env.LLM_MODEL || "gpt-4o-mini";
+
   if (!apiKey) {
-    throw new Error("Missing LLM_API_KEY in backend environment");
+    const raw = generateFallbackNodes(prompt, {
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      maxNodes: MAX_NODES,
+    });
+    return sanitizeNodes(raw);
   }
 
   const systemPrompt =
     "You are a JSON-only generator for canvas nodes. Return ONLY valid JSON in this exact shape: {\"nodes\":[...]} with no markdown or explanation. Allowed node.type values: circle, rectangle. Maximum 12 nodes. label must be 1-2 characters. Keep all nodes inside width 900 and height 560. Circle fields: type,x,y,radius,label. Rectangle fields: type,x,y,width,height,label.";
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const body = {
+    model,
+    temperature: 0.2,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: prompt },
+    ],
+  };
+
+  let response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: prompt },
-      ],
-    }),
+    body: JSON.stringify(body),
   });
+
+  if (!response.ok && response.status === 400) {
+    const retryBody = { ...body };
+    delete retryBody.response_format;
+    response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(retryBody),
+    });
+  }
 
   if (!response.ok) {
     const text = await response.text();
@@ -174,6 +200,8 @@ app.get("/", (req, res) => {
     ok: true,
     message: "Realtime canvas backend is running",
     canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+    llmConfigured: isLlmConfigured(),
+    generationMode: isLlmConfigured() ? "llm" : "structured_fallback",
   });
 });
 
@@ -181,6 +209,8 @@ app.get("/api/canvas/state", (req, res) => {
   res.json({
     nodes: canvasState.nodes,
     canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+    llmConfigured: isLlmConfigured(),
+    generationMode: isLlmConfigured() ? "llm" : "structured_fallback",
   });
 });
 

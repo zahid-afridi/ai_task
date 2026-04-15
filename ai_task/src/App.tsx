@@ -24,6 +24,9 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState("Disconnected");
   const [error, setError] = useState("");
+  const [generationMode, setGenerationMode] = useState<"llm" | "structured_fallback">(
+    "structured_fallback"
+  );
 
   useEffect(() => {
     const onConnect = () => setStatus("Connected");
@@ -56,8 +59,13 @@ function App() {
         if (!response.ok) {
           throw new Error("Failed to load canvas state");
         }
-        const data = (await response.json()) as CanvasGeneratedPayload;
+        const data = (await response.json()) as CanvasGeneratedPayload & {
+          generationMode?: "llm" | "structured_fallback";
+        };
         setNodes(sanitizeNodes(data.nodes || []));
+        if (data.generationMode) {
+          setGenerationMode(data.generationMode);
+        }
       })
       .catch(() => {
         // Keep silent because socket snapshot can still recover.
@@ -128,6 +136,12 @@ function App() {
         <div className="meta">
           <span>Status: {status}</span>
           <span>Nodes: {nodes.length}/12</span>
+          <span>
+            AI:{" "}
+            {generationMode === "llm"
+              ? "LLM (API key set)"
+              : "Structured fallback (no API key)"}
+          </span>
         </div>
         {error ? <p className="error">{error}</p> : null}
       </header>
