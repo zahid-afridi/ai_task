@@ -85,6 +85,20 @@ function App() {
     [prompt, isGenerating]
   );
 
+  const syncNodePosition = (
+    nodeId: string,
+    nextX: number,
+    nextY: number,
+    persist: boolean
+  ) => {
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === nodeId ? { ...node, x: nextX, y: nextY } : node
+      )
+    );
+    socket.emit("node:move", { id: nodeId, x: nextX, y: nextY, persist });
+  };
+
   const onGenerate = () => {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
@@ -101,18 +115,24 @@ function App() {
     socket.emit("canvas:generate", { prompt: trimmedPrompt });
   };
 
+  const onDragMove = (
+    nodeId: string,
+    event: KonvaEventObject<DragEvent>,
+    currentNode: CanvasNode
+  ) => {
+    const nextPos = clampMove(currentNode, event.target.x(), event.target.y());
+    event.target.position(nextPos);
+    syncNodePosition(nodeId, nextPos.x, nextPos.y, false);
+  };
+
   const onDragEnd = (
     nodeId: string,
     event: KonvaEventObject<DragEvent>,
     currentNode: CanvasNode
   ) => {
     const nextPos = clampMove(currentNode, event.target.x(), event.target.y());
-    setNodes((current) =>
-      current.map((node) =>
-        node.id === nodeId ? { ...node, x: nextPos.x, y: nextPos.y } : node
-      )
-    );
-    socket.emit("node:move", { id: nodeId, x: nextPos.x, y: nextPos.y });
+    event.target.position(nextPos);
+    syncNodePosition(nodeId, nextPos.x, nextPos.y, true);
   };
 
   return (
@@ -167,6 +187,7 @@ function App() {
                     x={node.x}
                     y={node.y}
                     draggable
+                    onDragMove={(event) => onDragMove(node.id, event, node)}
                     onDragEnd={(event) => onDragEnd(node.id, event, node)}
                   >
                     <Circle
@@ -197,6 +218,7 @@ function App() {
                   x={node.x}
                   y={node.y}
                   draggable
+                  onDragMove={(event) => onDragMove(node.id, event, node)}
                   onDragEnd={(event) => onDragEnd(node.id, event, node)}
                 >
                   <Rect

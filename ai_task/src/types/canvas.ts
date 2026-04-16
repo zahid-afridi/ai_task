@@ -33,6 +33,7 @@ export type NodeMovePayload = {
   id: string;
   x: number;
   y: number;
+  persist?: boolean;
 };
 
 export type CanvasGeneratePayload = {

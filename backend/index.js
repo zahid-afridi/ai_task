@@ -115,16 +115,7 @@ async function loadState() {
 
 function extractJsonObject(rawText) {
   const trimmed = rawText.trim();
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    const start = trimmed.indexOf("{");
-    const end = trimmed.lastIndexOf("}");
-    if (start === -1 || end === -1 || end <= start) {
-      throw new Error("Model output is not valid JSON");
-    }
-    return JSON.parse(trimmed.slice(start, end + 1));
-  }
+  return JSON.parse(trimmed);
 }
 
 function isLlmConfigured() {
@@ -287,7 +278,9 @@ io.on("connection", (socket) => {
       target.y = clamp(nextY, 0, CANVAS_HEIGHT - target.height);
     }
 
-    await saveState();
+    if (payload?.persist !== false) {
+      await saveState();
+    }
     io.emit("node:moved", { id: target.id, x: target.x, y: target.y });
   });
 });

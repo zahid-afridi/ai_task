@@ -54,7 +54,7 @@ Open the Vite URL (usually `http://localhost:5173`). Use sample prompts from the
 |------------------|------------------|----------------------------------|
 | `canvas:generate` | client → server | `{ prompt: string }`             |
 | `canvas:generated`| server → clients| `{ nodes: [...] }`               |
-| `node:move`       | client → server | `{ id, x, y }`                  |
+| `node:move`       | client → server | `{ id, x, y, persist? }`        |
 | `node:moved`      | server → clients| `{ id, x, y }`                  |
 
 ## Task checklist
@@ -62,5 +62,6 @@ Open the Vite URL (usually `http://localhost:5173`). Use sample prompts from the
 - Prompt → JSON (LLM when configured; structured fallback otherwise)
 - Konva rendering, draggable nodes
 - Realtime sync via Socket.IO
+- Live drag sync across tabs; state persisted on drag end
 - Constraints: circles/rectangles only, max 12 nodes, labels max 2 chars, positions clamped to canvas
 - Bonus: persistence via `backend/canvas-state.json`
