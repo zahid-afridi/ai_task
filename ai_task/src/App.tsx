@@ -17,6 +17,12 @@ import type {
 } from "./types/canvas";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const promptExamples = [
+  "Create 5 circles in a star layout",
+  "Create a star layout with 1 center node and 6 surrounding nodes",
+  "Create a 3x4 grid of circles labeled A-L",
+  "Create 4 rectangles in a row and 1 circle above center",
+];
 
 function App() {
   const [prompt, setPrompt] = useState("");
@@ -140,18 +146,37 @@ function App() {
       <header className="toolbar">
         <h1>AI Real-Time Canvas</h1>
         <p className="hint">
-          Example: Create a star layout with 1 center node and 6 surrounding nodes
+          Write a simple layout instruction. Mention the shape type, how many shapes
+          you want, and the layout.
         </p>
+        <div className="promptGuide">
+          <span className="promptGuideTitle">Good prompt pattern:</span>
+          <span className="promptGuideText">
+            "Create [count] [circles or rectangles] in a [layout]"
+          </span>
+        </div>
         <div className="controls">
           <input
             type="text"
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
-            placeholder="Create 5 circles in a star layout"
+            placeholder="Try: Create 5 circles in a star layout"
           />
           <button disabled={!canGenerate} onClick={onGenerate}>
             {isGenerating ? "Generating..." : "Generate"}
           </button>
+        </div>
+        <div className="examples">
+          {promptExamples.map((example) => (
+            <button
+              key={example}
+              type="button"
+              className="exampleChip"
+              onClick={() => setPrompt(example)}
+            >
+              {example}
+            </button>
+          ))}
         </div>
         <div className="meta">
           <span>Status: {status}</span>
